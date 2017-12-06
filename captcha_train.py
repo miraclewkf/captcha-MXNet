@@ -129,7 +129,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # the item of the captcha
-    captcha_str = "0123456789abcdefghijklmn"
+    captcha_str = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
     # define the int label from a to Z using dictionary
     captcha_dic = {}
