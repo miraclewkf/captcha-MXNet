@@ -139,7 +139,7 @@ if __name__ == '__main__':
 
     # define gpu
     if args.use_gpu:
-        devs = [mx.gpu(1)]
+        devs = [mx.gpu(0)]
     else:
         devs = [mx.cpu()]
 
