@@ -73,11 +73,11 @@ def get_net(num_class):
     relu3 = mx.symbol.Activation(data=pool3, act_type="relu")
 
     flatten = mx.symbol.Flatten(data = relu3)
-    fc1 = mx.symbol.FullyConnected(data = flatten, num_hidden = 512)
-    fc21 = mx.symbol.FullyConnected(data = fc1, num_hidden = num_class)
-    fc22 = mx.symbol.FullyConnected(data = fc1, num_hidden = num_class)
-    fc23 = mx.symbol.FullyConnected(data=fc1, num_hidden = num_class)
-    fc24 = mx.symbol.FullyConnected(data=fc1, num_hidden = num_class)
+    fc1 = mx.symbol.FullyConnected(data = flatten, num_hidden = 512, name='fc1')
+    fc21 = mx.symbol.FullyConnected(data = fc1, num_hidden = num_class, name='fc21')
+    fc22 = mx.symbol.FullyConnected(data = fc1, num_hidden = num_class, name='fc22')
+    fc23 = mx.symbol.FullyConnected(data=fc1, num_hidden = num_class, name='fc23')
+    fc24 = mx.symbol.FullyConnected(data=fc1, num_hidden = num_class, name='fc24')
     fc2 = mx.symbol.Concat(*[fc21, fc22, fc23, fc24], dim = 0)
     label = mx.symbol.transpose(data = label)
     label = mx.symbol.reshape(data = label, shape = (-1, ))
@@ -85,9 +85,10 @@ def get_net(num_class):
 
 # define the accuracy class for captcha, for example: if ground truth is "R23k", only you predict "R23k" is right
 class Accuracy_captcha(mx.metric.EvalMetric):
-    def __init__(self, batch_size):
+    def __init__(self, batch_size, label_length):
         super(Accuracy_captcha, self).__init__('accuracy_captcha')
         self.batch_size = batch_size
+        self.label_length = label_length
 
     def update(self, labels, preds):
         pred = preds[0].asnumpy()
@@ -96,9 +97,9 @@ class Accuracy_captcha(mx.metric.EvalMetric):
         label = label.T.reshape((-1,))
         hit = 0
         total = 0
-        for i in range(pred.shape[0] / 4):
+        for i in range(pred.shape[0] / self.label_length):
             ok = True
-            for j in range(4):
+            for j in range(self.label_length):
                 k = self.batch_size * j + i
                 if int(np.argmax(pred[k])) != int(label[k]):
                     ok = False
@@ -110,7 +111,7 @@ class Accuracy_captcha(mx.metric.EvalMetric):
         self.sum_metric += hit
         self.num_inst += total
 
-def multi_factor_scheduler(begin_epoch, epoch_size, step=[20,40], factor=0.2):
+def multi_factor_scheduler(begin_epoch, epoch_size, step=[10,20,30,40], factor=0.2):
     step_ = [epoch_size * (x-begin_epoch) for x in step if x-begin_epoch > 0]
     return mx.lr_scheduler.MultiFactorScheduler(step=step_, factor=factor) if len(step_) else None
 
@@ -125,7 +126,9 @@ if __name__ == '__main__':
     parser.add_argument('--height', type=int, default=30, help="the height of input image")
     parser.add_argument('--width', type=int, default=80, help="the width of input image")
     parser.add_argument('--label-length', type=int, default=4, help="the length of captcha")
-    parser.add_argument('--output-path', type=str, default='output/test', help="the path to save model")
+    parser.add_argument('--output-path', type=str, default='output/test/', help="the path to save model")
+    parser.add_argument('--save-name', type=str, default='captcha', help='the name of model you want to save')
+    parser.add_argument('--use-gpu', type=bool, default=True, help="Using gpu or not")
     args = parser.parse_args()
 
     # the item of the captcha
@@ -142,7 +145,10 @@ if __name__ == '__main__':
     network = get_net(num_class = len(captcha_str))
 
     # define gpu
-    devs = [mx.gpu(0)]
+    if args.use_gpu:
+        devs = [mx.gpu(0)]
+    else:
+        devs = [mx.cpu()]
 
     optimizer_params = {
                 'learning_rate': 0.0002,
@@ -160,14 +166,14 @@ if __name__ == '__main__':
     # get train and test data
     data_train = CustomDataIter(num_example = args.train_data_number,
                                 batch_size = args.batch_size,
-                                label_length = 4,
+                                label_length = args.label_length,
                                 height = args.height,
                                 width = args.width,
                                 captcha_str = captcha_str,
                                 captcha_dic = captcha_dic)
     data_test = CustomDataIter(num_example = args.test_data_number,
                                batch_size = args.batch_size,
-                               label_length = 4,
+                               label_length = args.label_length,
                                height = args.height,
                                width = args.width,
                                captcha_str = captcha_str,
@@ -183,7 +189,7 @@ if __name__ == '__main__':
 
     # define evaluation metric
     eval_metric = mx.metric.CompositeEvalMetric()
-    eval_metric.add(Accuracy_captcha(batch_size = args.batch_size))
+    eval_metric.add(Accuracy_captcha(batch_size = args.batch_size, label_length = args.label_length))
     eval_metric.add(['CrossEntropy'])
 
     # define the output file path of model
@@ -198,5 +204,5 @@ if __name__ == '__main__':
               num_epoch = args.num_epoch,
               optimizer_params = optimizer_params,
               initializer = initializer,
-              batch_end_callback=mx.callback.Speedometer(args.batch_size, 50),
-              epoch_end_callback=mx.callback.do_checkpoint(args.output_path))
+              batch_end_callback=mx.callback.Speedometer(args.batch_size, 20),
+              epoch_end_callback=mx.callback.do_checkpoint(args.output_path + args.save_name))

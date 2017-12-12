@@ -6,10 +6,16 @@ It is modified from [reference1:xlvector](https://github.com/xlvector/learning-d
 
 ### Usage
 
-clone this project and just run:
+* If you want to train from scratch, please run:
 
-`python captcha_train.py`
+`python captcha_train_from_scratch.py`
+
+* If you want to fine tune in the pretrained model(**recommend**), please run:
+
+`python captcha_train_finetune.py`
+
 
 ### Attention
+* pretrained model can be download from:[GoogleDrive](https://drive.google.com/open?id=1-yEReei1jD3sUS5tzg5uNVwKUJwy6r9W)
 
-* The result of model is sensitive to `learning rate` and is a little difficult to converge. 
+* If you train from scratch, the result of model is sensitive to `learning rate` and is a little difficult to converge, so **fine tune is recommended**. 
