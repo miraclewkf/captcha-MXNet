@@ -16,6 +16,6 @@ It is modified from [reference1:xlvector](https://github.com/xlvector/learning-d
 
 
 ### Attention
-* pretrained model can be download from:[GoogleDrive](https://drive.google.com/open?id=1-yEReei1jD3sUS5tzg5uNVwKUJwy6r9W)
+* pretrained model can be download from:[GoogleDrive](https://drive.google.com/open?id=1p6dB15YVm9Ph03jlRNT_B6CgGppPIQjt)
 
 * If you train from scratch, the result of model is sensitive to `learning rate` and is a little difficult to converge, so **fine tune is recommended**. 

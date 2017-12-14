@@ -101,7 +101,7 @@ class Accuracy_captcha(mx.metric.EvalMetric):
         self.sum_metric += hit
         self.num_inst += total
 
-def multi_factor_scheduler(begin_epoch, epoch_size, step=[10,20,30,40], factor=0.2):
+def multi_factor_scheduler(begin_epoch, epoch_size, step=[20,40], factor=0.2):
     step_ = [epoch_size * (x-begin_epoch) for x in step if x-begin_epoch > 0]
     return mx.lr_scheduler.MultiFactorScheduler(step=step_, factor=factor) if len(step_) else None
 
@@ -139,7 +139,7 @@ if __name__ == '__main__':
 
     # define gpu
     if args.use_gpu:
-        devs = [mx.gpu(0)]
+        devs = [mx.gpu(1)]
     else:
         devs = [mx.cpu()]
 
