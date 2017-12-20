@@ -4,6 +4,7 @@ import cv2, random
 import os
 import argparse
 from captcha.image import ImageCaptcha
+import logging
 
 def get_captcha(length, captcha_str):
     result = ""
@@ -189,6 +190,19 @@ if __name__ == '__main__':
     if not os.path.exists(args.output_path):
         os.makedirs(args.output_path)
 
+    # print the detail of args
+    logging.info(args)
+
+    # save log file as train.log
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
+    formatter = logging.Formatter('%(asctime)s - %(message)s')
+
+    console = logging.FileHandler(args.output_path + 'train.log')
+    console.setFormatter(formatter)
+    logger.addHandler(console)
+
     # train model
     model.fit(data_train,
               eval_data = data_test,
@@ -200,5 +214,5 @@ if __name__ == '__main__':
               optimizer_params = optimizer_params,
               initializer = initializer,
               allow_missing=True, # for replace some layers
-              batch_end_callback=mx.callback.Speedometer(args.batch_size, 20),
+              batch_end_callback=mx.callback.Speedometer(args.batch_size, 2),
               epoch_end_callback=mx.callback.do_checkpoint(args.output_path + args.save_name))
